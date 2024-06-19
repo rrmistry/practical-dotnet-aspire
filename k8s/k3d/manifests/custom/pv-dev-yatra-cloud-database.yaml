@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-dev-aspire-cluster-database
+  namespace: aspire-cluster
+  labels:
+    app.kubernetes.io/name: aspire-cluster
+    app.kubernetes.io/instance: aspire-cluster
+    aspire.cloud/component: database
+    aspire.cloud/resource: persistent-volume
+    aspire.cloud/resource-name: database
+    app.kubernetes.io/managed-by: Manually
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: "managed-csi"
+  local:
+    path: /tmp/aspire-cluster/database
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+
+      - matchExpressions:
+
+        # Add affinity towards certain nodes
+        # In this case, we filter by the node labels
+        - key: kubernetes.azure.com/scalesetpriority
+          operator: In
+          values:
+          - "spot"
+
+        # # Add affinity towards certain nodes
+        # # In this case, we filter by the hostname
+        # - key: kubernetes.io/hostname
+        #   operator: In
+        #   values:
+        #   - k3d-aspire-cluster-server-0
+        #   - k3d-aspire-cluster-server-1
+        #   - k3d-aspire-cluster-server-2

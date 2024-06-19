@@ -352,3 +352,6 @@ MigrationBackup/
 tmp/
 .env
 coverage/
+
+# Ignore go-task file cache folder
+.task/

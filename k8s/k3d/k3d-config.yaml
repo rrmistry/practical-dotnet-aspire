@@ -1,0 +1,131 @@
+# Reference: https://k3d.io/v5.4.9/usage/configfile/
+#
+# Usage:
+#
+#   k3d cluster create --config k8s/k3d/k3d-config.yaml
+#
+
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+
+metadata:
+  name: aspire-cluster
+
+# Number of servers and agents can be changed as needed
+servers: 1  # [Control Plane] Contains core components like the API server, scheduler, and etcd
+agents:  2  # [Worker Nodes]  Contains the kubelet and kube-proxy components only
+
+volumes:
+
+- volume: "$PWD/k8s/k3d/manifests:/var/lib/rancher/k3s/server/manifests"
+  nodeFilters:
+    - server:*
+    - agent:*
+
+- volume: "$PWD/k8s/k3d/mounts/pv-dev-aspire-cluster-database:/tmp/aspire-cluster/database"
+  nodeFilters:
+    - server:*
+    - agent:*
+
+# # This volume is no longer needed as we are using okteto for development
+# # Okteto mounts the local directory to the remote container
+# - volume: "$PWD/aspire-pwa:/app/src/aspire-pwa"
+#   nodeFilters:
+#     - server:1
+#     - server:2
+
+ports:
+- port: 80:80
+  nodeFilters:
+  - loadbalancer
+- port: 443:443
+  nodeFilters:
+  - loadbalancer
+- port: 5432:5432 # PostgreSQL
+  nodeFilters:
+  - loadbalancer
+- port: 3306:3306 # MySQL
+  nodeFilters:
+  - loadbalancer
+- port: 1433:1433 # Microsoft SQL Server
+  nodeFilters:
+  - loadbalancer
+
+registries:
+  create:
+    name: aspire-cluster
+    host: 0.0.0.0
+    hostPort: random
+
+  # config: | # define contents of the `registries.yaml` file (or reference a file); same as `--registry-config /path/to/config.yaml`
+  #   mirrors:
+  #     "aspire-cluster:5000":
+  #       endpoint:
+  #         - http://aspire-cluster:5000
+
+  #   configs:
+  #     "aspire-cluster:5000":
+  #       auth:
+  #         username: "test"
+  #         password: "Password123"
+
+options:
+
+  k3d: # k3d runtime settings
+    wait: true # wait for cluster to be usable before returining; same as `--wait` (default: true)
+    timeout: "600s" # wait timeout before aborting; same as `--timeout 60s`
+    disableLoadbalancer: false # same as `--no-lb`
+    disableImageVolume: false # same as `--no-image-volume`
+    disableRollback: false # same as `--no-Rollback`
+    loadbalancer:
+      configOverrides:
+        - settings.workerConnections=2048
+
+  k3s: # options passed on to K3s itself
+
+    extraArgs: # additional arguments passed to the `k3s server|agent` command; same as `--k3s-arg`
+
+    # Required for native kubernetes side-car containers
+    # Reference: https://istio.io/latest/blog/2023/native-sidecars/#trying-it-out
+    # k3s arg reference: https://github.com/k3s-io/k3s/discussions/4596#discussioncomment-1718854
+    - arg: "--kubelet-arg=feature-gates=SidecarContainers=true"
+      nodeFilters:
+      - server:*
+      - agent:*
+
+    - arg: "--disable=traefik"
+      nodeFilters:
+      - server:*
+      # - agent:* # Command not supported on agent nodes
+
+    - arg: --tls-san=*
+      nodeFilters:
+      - server:*
+      # - agent:* # Command not supported on agent nodes
+
+    # Label some server as an Azure Spot Instance Server
+    # Reference: https://learn.microsoft.com/en-us/azure/aks/spot-node-pool
+    - arg: --node-label=kubernetes.azure.com/scalesetpriority=standard
+      nodeFilters:
+      - server:*
+    - arg: --node-taint=CriticalAddonsOnly=true:NoSchedule
+      nodeFilters:
+      - server:*
+
+    - arg: --node-label=kubernetes.azure.com/scalesetpriority=spot
+      nodeFilters:
+      - agent:*
+    - arg: --node-taint=kubernetes.azure.com/scalesetpriority=spot:NoSchedule
+      nodeFilters:
+      - agent:0
+      # - agent:1
+      # - agent:*
+
+# This modifies the local hosts file on each node/container
+hostAliases:
+- ip: "127.0.0.1"
+  hostnames:
+  - "dev.aspire.cloud"
+  - "api.dev.aspire.cloud"
+  - "db.dev.aspire.cloud"
+  - "report.dev.aspire.cloud"

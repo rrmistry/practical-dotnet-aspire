@@ -69,7 +69,7 @@ services:
   #     - coffeeshop-network
 
   rabbitmq:
-    image: masstransit/rabbitmq:latest
+    image: docker.io/library/rabbitmq:3.13-management
     healthcheck:
       test: rabbitmq-diagnostics -q ping
       interval: 30s

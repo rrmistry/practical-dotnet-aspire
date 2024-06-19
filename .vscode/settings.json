@@ -1,4 +1,15 @@
 {
     "files.eol": "\n",
-    "dotnet.defaultSolution": "coffeeshop.sln"
+    "dotnet.defaultSolution": "coffeeshop.sln",
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "**/bin": true,
+        "**/obj": true,
+        "**/.task": true,
+    }
 }
