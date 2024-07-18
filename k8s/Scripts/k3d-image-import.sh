@@ -28,13 +28,13 @@ while IFS= read -r image_tag; do
     fi
 
     # Import this image into the k3d cluster (one at a time)
-    echo "Importing images into k3d cluster 'yatra-cloud'"
-    k3d image import --cluster "yatra-cloud" --mode "direct" $image_tag
+    echo "Importing images into k3d cluster 'aspire-cluster'"
+    k3d image import --cluster "aspire-cluster" --mode "direct" $image_tag
 done < ./images.list
 
 # # Import all the images into the k3d cluster (once step but very slow and resource intensive)
-# echo "Importing images into k3d cluster 'yatra-cloud'"
-# k3d image import --cluster "yatra-cloud" --mode "direct" "${known_image_tags[@]}" --trace
+# echo "Importing images into k3d cluster 'aspire-cluster'"
+# k3d image import --cluster "aspire-cluster" --mode "direct" "${known_image_tags[@]}" --trace
 
 
 # # List all local Docker images with their tags
@@ -55,7 +55,7 @@ done < ./images.list
 #     # fi
 
 #     # Run the k3d image import command for each tagged image
-#     echo "Importing $image_tag into k3d cluster 'yatra-cloud'"
-#     k3d image import --cluster "yatra-cloud" "$image_tag"
+#     echo "Importing $image_tag into k3d cluster 'aspire-cluster'"
+#     k3d image import --cluster "aspire-cluster" "$image_tag"
 # done
 

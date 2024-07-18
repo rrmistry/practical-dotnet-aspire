@@ -12,7 +12,7 @@ env:
 
 tasks:
   run:
-    desc: "Run the dotnet project"
+    desc: Run the dotnet project
     cmds:
       - dotnet run --project app-host/CoffeeShop.AppHost.csproj
     sources:
@@ -25,7 +25,7 @@ tasks:
         - .env
     
   build:
-    desc: "Build the dotnet solution"
+    desc: Build the dotnet solution
     cmds:
       - dotnet build coffeeshop-aspire.sln
     sources:
@@ -40,33 +40,42 @@ tasks:
   # region: Cluster
 
   cluster-create:
+    desc: Create Kubernetes cluster in k3d
     cmds:
-      - k3d cluster create --config {{.K3D_CONFIG}} {{.CLI_ARGS}}
+      - k3d cluster create --verbose --config {{.K3D_CONFIG}} {{.CLI_ARGS}}
 
   cluster-delete:
+    desc: Delete Kubernetes cluster in k3d
     cmds:
-      - k3d cluster delete {{.CLUSTER_NAME}} {{.CLI_ARGS}}
+      - k3d cluster delete --verbose {{.CLUSTER_NAME}} {{.CLI_ARGS}}
 
   # ---------------------------------------------------------------------------
   # region: Cluster Node
 
   cluster-node-create:
+    desc: |
+      Add Kubernetes Node in cluster in k3d
+
+      Usage: `task cluster-node-create -- --node-name my-node`
     cmds:
-      - k3d node create --cluster {{.CLUSTER_NAME}} {{.CLI_ARGS}} --verbose
+      - k3d node create --verbose --cluster {{.CLUSTER_NAME}} {{.CLI_ARGS}}
 
   cluster-node-delete:
+    desc: Delete Kubernetes Node in cluster in k3d
     cmds:
-      - k3d node delete {{.CLI_ARGS}} --verbose
+      - k3d node delete --verbose {{.CLI_ARGS}}
       # - k3d node delete --cluster {{.CLUSTER_NAME}} {{.CLI_ARGS}}
 
   # ---------------------------------------------------------------------------
   # region: Cluster Start/Stop
 
   cluster-start:
+    desc: Start Kubernetes cluster in k3d
     cmds:
       - k3d cluster start {{.CLUSTER_NAME}} {{.CLI_ARGS}}
 
   cluster-stop:
+    desc: Stop Kubernetes cluster in k3d
     cmds:
       - k3d cluster stop {{.CLUSTER_NAME}} {{.CLI_ARGS}}
 
@@ -74,6 +83,7 @@ tasks:
   # region: Cluster Images
 
   cluster-images-export:
+    desc: Export container images in Kubernetes cluster in k3d into local file
     dir: k8s/scripts/
     cmds:
       - chmod u+x ./kubectl-list-pod-images.sh
@@ -81,41 +91,53 @@ tasks:
         ignore_error: true
 
   cluster-images-import:
+    desc: Import container images in local file into Kubernetes cluster in k3d
     dir: k8s/scripts/
     cmds:
       - chmod u+x ./k3d-image-import.sh
       - ./k3d-image-import.sh {{.CLI_ARGS}}
 
   cluster-images-import-single:
+    desc: Import single container image in local file into Kubernetes cluster in k3d
     cmds:
       - docker pull {{.CLI_ARGS}}
       - k3d image import --cluster {{.CLUSTER_NAME}} --mode "auto" {{.CLI_ARGS}}
 
   # ---------------------------------------------------------------------------
-  # region: Cluster Reset
+  # region: Cluster Management
 
   cluster-reset:  # Combines multiple Makefile targets
+    desc: Reset Kubernetes cluster in k3d
     cmds:
-      - task: cluster-images-export
+      # - task: cluster-images-export
       - task: cluster-delete
       - task: cluster-create
       - task: cluster-images-import
+
+  k9s:
+    desc: Run k9s
+    cmds:
+      - k9s --headless --all-namespaces {{.CLI_ARGS}}
 
   # ---------------------------------------------------------------------------
   # region: Tilt
 
   tilt-up:
+    desc: Start Tilt
     cmds:
       - tilt up --file ./Tiltfile --stream --verbose {{.CLI_ARGS}}
 
   tilt-ci:
+    desc: Run Tilt CI
     cmds:
       - tilt ci --file ./Tiltfile --verbose {{.CLI_ARGS}}
 
   tilt-stop:
+    desc: Stop Tilt
     cmds:
       - pkill -9 tilt
 
   tilt-update:
+    desc: Update Tilt
     cmds:
       - curl -fsSL https://raw.githubusercontent.com/tilt-dev/tilt/master/scripts/install.sh | bash
