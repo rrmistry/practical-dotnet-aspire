@@ -3,3 +3,4 @@ quay.io/strimzi/operator:0.42.0
 rancher/local-path-provisioner:v0.0.27
 rancher/mirrored-coredns-coredns:1.10.1
 rancher/mirrored-metrics-server:v0.7.0
+mcr.microsoft.com/devcontainers/base:latest
