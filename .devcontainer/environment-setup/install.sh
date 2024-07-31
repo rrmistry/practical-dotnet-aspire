@@ -34,7 +34,7 @@ EOF
 cat <<EOF >> ~/.zshrc
 
 # Add .NET Core SDK tools
-export PATH="$PATH:/root/.dotnet/tools"
+export PATH="\$PATH:/root/.dotnet/tools"
 
 EOF
 
@@ -44,7 +44,7 @@ EOF
 cat <<EOF >> ~/.zshrc
 
 # Add Linkerd path to environment variables
-export PATH=$PATH:/root/.linkerd2/bin
+export PATH=\$PATH:/root/.linkerd2/bin
 
 EOF
 

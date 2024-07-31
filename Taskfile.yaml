@@ -44,6 +44,7 @@ tasks:
     desc: Create Kubernetes cluster in k3d
     cmds:
       - k3d cluster create --verbose --config {{.K3D_CONFIG}} {{.CLI_ARGS}}
+      - task: cluster-images-import
       - task: linkerd-install
 
   cluster-delete:
@@ -114,10 +115,11 @@ tasks:
       # - task: cluster-images-export
       - task: cluster-delete
       - task: cluster-create
-      - task: cluster-images-import
 
   k9s:
     desc: Run k9s
+    interactive: true
+    prefix: ""
     cmds:
       - k9s --headless --all-namespaces {{.CLI_ARGS}}
 
@@ -133,15 +135,11 @@ tasks:
   # ---------------------------------------------------------------------------
   # region: Tilt
 
-  tilt-up:
-    desc: Start Tilt
+  tilt-*:
+    desc: Start Tilt in 'up' mode or 'ci' mode
+    prefix: tilt-{{index .MATCH 0}}
     cmds:
-      - tilt up --file ./Tiltfile --stream --verbose {{.CLI_ARGS}}
-
-  tilt-ci:
-    desc: Run Tilt CI
-    cmds:
-      - tilt ci --file ./Tiltfile --verbose {{.CLI_ARGS}}
+      - tilt {{index .MATCH 0}} --file ./Tiltfile --verbose {{if eq (index .MATCH 0) "up"}} --stream {{end}} {{.CLI_ARGS}}
 
   tilt-stop:
     desc: Stop Tilt

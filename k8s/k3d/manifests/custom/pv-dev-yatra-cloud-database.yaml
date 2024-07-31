@@ -2,7 +2,6 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: pv-dev-aspire-cluster-database
-  namespace: aspire-cluster
   labels:
     app.kubernetes.io/name: aspire-cluster
     app.kubernetes.io/instance: aspire-cluster
