@@ -93,10 +93,11 @@ options:
       - server:*
       - agent:*
 
-    - arg: "--disable=traefik"
-      nodeFilters:
-      - server:*
-      # - agent:* # Command not supported on agent nodes
+    # # Disable traefik as default load balancer and ingress controller
+    # - arg: "--disable=traefik"
+    #   nodeFilters:
+    #   - server:*
+    #   # - agent:* # Command not supported on agent nodes
 
     - arg: --tls-san=*
       nodeFilters:

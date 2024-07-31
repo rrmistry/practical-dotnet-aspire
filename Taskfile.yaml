@@ -14,7 +14,7 @@ tasks:
   run:
     desc: Run the dotnet project
     cmds:
-      - dotnet run --project app-host/CoffeeShop.AppHost.csproj
+      - dotnet run --project src/app-host/CoffeeShop.AppHost.csproj
     sources:
       - "**/*.cs"
       - "**/*.csproj"
@@ -30,6 +30,7 @@ tasks:
       - dotnet build coffeeshop-aspire.sln
     sources:
       - "**/*.cs"
+      - "**/*.csproj"
     shopt: 
       - expand_aliases
     env:
@@ -43,9 +44,11 @@ tasks:
     desc: Create Kubernetes cluster in k3d
     cmds:
       - k3d cluster create --verbose --config {{.K3D_CONFIG}} {{.CLI_ARGS}}
+      - task: linkerd-install
 
   cluster-delete:
     desc: Delete Kubernetes cluster in k3d
+    prompt: This will destroy your kubernetes cluster... Do you want to continue?
     cmds:
       - k3d cluster delete --verbose {{.CLUSTER_NAME}} {{.CLI_ARGS}}
 
@@ -64,7 +67,6 @@ tasks:
     desc: Delete Kubernetes Node in cluster in k3d
     cmds:
       - k3d node delete --verbose {{.CLI_ARGS}}
-      # - k3d node delete --cluster {{.CLUSTER_NAME}} {{.CLI_ARGS}}
 
   # ---------------------------------------------------------------------------
   # region: Cluster Start/Stop
@@ -118,6 +120,15 @@ tasks:
     desc: Run k9s
     cmds:
       - k9s --headless --all-namespaces {{.CLI_ARGS}}
+
+  linkerd-install:
+    desc: Install Linkerd
+    cmds:
+      - linkerd check --pre
+      - linkerd install --crds | kubectl apply -f -
+      - linkerd install | kubectl apply -f -
+      - linkerd viz install | kubectl apply -f -
+      - linkerd check
 
   # ---------------------------------------------------------------------------
   # region: Tilt

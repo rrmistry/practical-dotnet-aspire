@@ -30,6 +30,11 @@ dotnet run --project app-host/CoffeeShop.AppHost.csproj \
 ## Deploy to Kubernetes
 
 ```sh
+# Create K3d Kubernetes cluster
+task cluster-create
+```
+
+```sh
 dotnet tool install -g aspirate --prerelease
 ```
 

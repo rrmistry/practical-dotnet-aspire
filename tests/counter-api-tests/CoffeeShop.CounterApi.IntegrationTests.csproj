@@ -36,7 +36,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\counter-api\CoffeeShop.CounterApi.csproj" IsAspireProjectResource="false" />
+		<ProjectReference Include="..\..\src\counter-api\CoffeeShop.CounterApi.csproj" IsAspireProjectResource="false" />
 	</ItemGroup>
 
 	<ItemGroup>

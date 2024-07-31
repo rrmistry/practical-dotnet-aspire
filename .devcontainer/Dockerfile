@@ -18,3 +18,6 @@ RUN curl -fsSL https://raw.githubusercontent.com/tilt-dev/tilt/master/scripts/in
 
 # Install go-task
 RUN sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
+
+# Install Linkerd
+RUN curl -sL https://run.linkerd.io/install | sh

@@ -1,0 +1,12 @@
+{
+    "id": "environment-setup",
+    "version": "2.11.0",
+    "name": "Common Dev Container Environment Setup",
+    "description": "Setup the dev container environment using install.sh scirpt",
+    "entrypoint": "/usr/bin/bash",
+    "installsAfter": [
+        "ghcr.io/devcontainers/features/dotnet:2",
+        "ghcr.io/devcontainers/features/azure-cli:1",
+        "ghcr.io/devcontainers/features/powershell:1"
+    ]
+}
