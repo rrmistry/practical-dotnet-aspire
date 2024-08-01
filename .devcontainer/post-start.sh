@@ -13,11 +13,8 @@ set -e
 
 # -----------------------------------------------------------------------------
 
-# dotnet version
-dotnet --version
-
-# dotnet workload list
-dotnet workload list
+# List tasks
+task --list-all
 
 # -----------------------------------------------------------------------------
 

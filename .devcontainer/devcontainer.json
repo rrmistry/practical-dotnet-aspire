@@ -1,8 +1,11 @@
 {
 	"name": "CoffeeShop on .NET Aspire",
 	"dockerFile": "Dockerfile",
-	"onCreateCommand": "bash ./.devcontainer/on-create.sh",
-	"postCreateCommand": "bash ./.devcontainer/post-create.sh",
+	"onCreateCommand": ". ./.devcontainer/on-create.sh",
+	"postCreateCommand": ". ./.devcontainer/post-create.sh",
+	"postStartCommand": ". ./.devcontainer/post-start.sh",
+	"containerUser": "root",
+	"remoteUser": "root",
 	// Features to add to the dev container. More info: https://containers.dev/features
 	"features": {
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
@@ -11,9 +14,7 @@
 		"ghcr.io/azure/azure-dev/azd:0": {
 			"version": "latest"
 		},
-		"ghcr.io/devcontainers/features/common-utils:2": {
-			"configureZshAsDefaultShell": true
-		},
+		"ghcr.io/devcontainers/features/common-utils:2": {},
 		"ghcr.io/dapr/cli/dapr-cli:0": {
 			"version": "latest"
 		},
@@ -23,7 +24,9 @@
 	"customizations": {
 		// Configure properties specific to VS Code.
 		"vscode": {
-			"settings": {},
+			"settings": {
+				"files.eol": "\n"
+			},
 			"extensions": [
 				"bierner.markdown-mermaid",
 				"Codeium.codeium",

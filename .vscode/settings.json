@@ -1,6 +1,7 @@
 {
     "files.eol": "\n",
-    "dotnet.defaultSolution": "coffeeshop.sln",
+    "dotnet.defaultSolution": "coffeeshop-aspire.sln",
+    "dotnet.preferVisualStudioCodeFileSystemWatcher": true,
     "files.exclude": {
         "**/.git": true,
         "**/.svn": true,
@@ -11,5 +12,5 @@
         "**/bin": true,
         "**/obj": true,
         "**/.task": true,
-    }
+    },
 }

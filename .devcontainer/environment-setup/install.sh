@@ -1,4 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+# Check if dos2unix exists and run it only if it does
+if command -v dos2unix >/dev/null 2>&1; then
+    dos2unix "$0" 2>/dev/null || true
+fi
 
 # Stop on errors
 set -e
@@ -8,45 +13,40 @@ set -e
 
 # -----------------------------------------------------------------------------
 
-# Install Git version control system
-apt-get update && apt-get install -y git bash bash-completion
+# Install Kubernetes tools
+
+# Install k3d
+curl -fsSL https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+
+# Install k9s
+curl -fsSL https://webi.sh/k9s | bash
+
+# Install Tilt
+curl -fsSL https://raw.githubusercontent.com/tilt-dev/tilt/master/scripts/install.sh | bash
 
 # -----------------------------------------------------------------------------
 
-# Download file Taskfile completions for ZSH and BASH
-curl https://raw.githubusercontent.com/go-task/task/main/completion/zsh/_task  -o ~/.oh-my-zsh/completions/_task
-curl https://raw.githubusercontent.com/go-task/task/main/completion/bash/task.bash -o ~/task.bash
-
-# Add Taskfile Bash Completion to `completion_script`
-cat <<EOF >> ~/.bashrc
-
-# Enable bash auto-completion feature
-source /etc/bash_completion
-
-# Add Taskfile bash auto-completion
-source ~/task.bash
-
-EOF
+# Install go-task
+sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
 
 # -----------------------------------------------------------------------------
 
-# Add dotnet tool path to environment variables using ~/.zshrc file
-cat <<EOF >> ~/.zshrc
-
-# Add .NET Core SDK tools
-export PATH="\$PATH:/root/.dotnet/tools"
-
-EOF
+# Install Linkerd
+curl -fsSL https://run.linkerd.io/install | bash
 
 # -----------------------------------------------------------------------------
 
-# Add linkerd path to environment variables using ~/.zshrc file
-cat <<EOF >> ~/.zshrc
+# Install Aspire
+dotnet workload install aspire
 
-# Add Linkerd path to environment variables
-export PATH=\$PATH:/root/.linkerd2/bin
+# Install Aspirate
+dotnet tool install --global aspirate
 
-EOF
+# Install dotnet-script
+dotnet tool install --global dotnet-script
+
+# Install dotnet-repl
+dotnet tool install --global dotnet-repl
 
 # -----------------------------------------------------------------------------
 
