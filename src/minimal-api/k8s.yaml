@@ -150,7 +150,7 @@ metadata:
   annotations:
     haproxy.router.openshift.io/timeout: 5m
 spec:
-  host: minimal-api.apps.mycompanyvsandbox2.mycompanyopenshift.sleepyhead.co.nz
+  host: minimal-api.apps.mycompanyvsandbox2.mycompanyopenshift.mycompany.co
   to:
     kind: Service
     name: minimal-api
