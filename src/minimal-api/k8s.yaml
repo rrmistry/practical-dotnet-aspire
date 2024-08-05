@@ -1,0 +1,322 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minimal-api
+  namespace: default
+  labels:
+    app: minimal-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minimal-api
+  template:
+    metadata:
+      labels:
+        app: minimal-api
+    spec:
+      imagePullSecrets:
+        - name: mycompanycontainers-secret
+      serviceAccountName: fluent-bit
+      containers:
+        - name: minimal-api
+          image: "mycompanycontainers.azurecr.io/brown-bag/minimal-api:latest"
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: ASPNETCORE_URLS
+              value: "http://+:8080"
+          command:
+            - "/bin/sh"
+          args:
+            - "-c"
+            - |
+              chmod +x /app/entrypoint.sh
+              /app/entrypoint.sh dotnet script /app/main.csx
+          volumeMounts:
+            - name: shared-logs
+              mountPath: /var/log/app/
+            - name: entrypoint-script
+              mountPath: /app/entrypoint.sh
+              subPath: entrypoint.sh
+            - name: podinfo
+              mountPath: /etc/podinfo
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "256Mi"
+              cpu: "1"
+        - name: logging-sidecar
+          image: fluent/fluent-bit:latest
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: CONTAINER_NAME
+              value: minimal-api
+            - name: ES_HOSTNAME
+              valueFrom:
+                secretKeyRef:
+                  name: elasticsearch-credentials
+                  key: hostname
+            - name: ES_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: elasticsearch-credentials
+                  key: username
+            - name: ES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: elasticsearch-credentials
+                  key: password
+          volumeMounts:
+            - name: shared-logs
+              mountPath: /var/log/app/
+              readOnly: true
+            - name: config
+              mountPath: /fluent-bit/etc
+            - name: podinfo
+              mountPath: /etc/podinfo
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "256Mi"
+              cpu: "1"
+      volumes:
+        - name: shared-logs
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: fluent-bit-config
+        - name: entrypoint-script
+          configMap:
+            name: app-entrypoint
+            defaultMode: 0755
+        - name: podinfo
+          downwardAPI:
+            items:
+              - path: "labels"
+                fieldRef:
+                  fieldPath: metadata.labels
+              - path: "annotations"
+                fieldRef:
+                  fieldPath: metadata.annotations
+              - path: "name"
+                fieldRef:
+                  fieldPath: metadata.name
+              - path: "namespace"
+                fieldRef:
+                  fieldPath: metadata.namespace
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minimal-api
+  namespace: default
+  labels:
+    app: minimal-api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: minimal-api
+---
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: minimal-api
+  namespace: default
+  labels:
+    app: minimal-api
+  annotations:
+    haproxy.router.openshift.io/timeout: 5m
+spec:
+  host: minimal-api.apps.mycompanyvsandbox2.mycompanyopenshift.sleepyhead.co.nz
+  to:
+    kind: Service
+    name: minimal-api
+    weight: 100
+  port:
+    targetPort: http
+  wildcardPolicy: None
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: mycompanycontainers-secret
+  namespace: default
+type: kubernetes.io/dockerconfigjson
+stringData:
+  .dockerconfigjson: >-
+    <DOCKER_CONFIG_JSON>
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: elasticsearch-credentials
+type: Opaque
+stringData:
+  hostname: <ES_ENDPOINT>
+  username: <ES_USERNAME>
+  password: <ES_PASSWORD>
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-entrypoint
+  namespace: default
+data:
+  entrypoint.sh: |
+    #!/bin/sh
+    mkdir -p /var/log/app/
+    exec "$@" 2>&1 | tee -a /var/log/app/app.log
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-config
+  namespace: default
+data:
+  parsers.conf: |
+    [PARSER]
+        Name   first_line
+        Format regex
+        Regex  ^chmod: changing permissions of '/app/entrypoint.sh': Read-only file system$
+
+    [PARSER]
+        Name          dotnet_multiline
+        Format        regex
+        Regex         ^(?<level>[a-z]+): (?<logger>[^\[]+)\[(?<event_id>[^\]]+)\]\s*(?<message>(?:(?!^[a-z]+:)[\s\S])+)
+        Time_Key      time
+        Time_Format   %Y-%m-%d %H:%M:%S
+
+    [MULTILINE_PARSER]
+        name          multiline-dotnet-logs
+        type          regex
+        flush_timeout 1000
+
+        # Rules for multiline parsing
+        # ---------------------------
+        #
+        # configuration hints:
+        #
+        #  - first state always has the name: start_state
+        #  - every field in the rule must be inside double quotes
+        #
+        # rules |   state name  | regex pattern                  | next state
+        # ------|---------------|--------------------------------------------
+        rule      "start_state"   "/^(warn|info|fail): .*/"        "cont"
+        rule      "cont"          "/^\s+.*/"                       "cont"
+
+  enrich_metadata.lua: |
+    function enrich_log(tag, timestamp, record)
+
+      record["nodeName"] = os.getenv("NODE_NAME")
+      record["namespace"] = os.getenv("POD_NAMESPACE")
+      record["pod"] = os.getenv("POD_NAME")
+      record["container"] = os.getenv("CONTAINER_NAME")
+
+      -- Construct the expected tag format
+      tag = string.format("kube.var.log.containers.%s_%s_%s", pod_name, namespace, pod_name)
+
+      return 2, timestamp, record -- return success
+    end
+
+  fluent-bit.conf: |
+    [SERVICE]
+        flush        1
+        log_level    info
+        Parsers_File   /fluent-bit/etc/parsers.conf
+
+    [INPUT]
+        Name              tail
+        Tag               custom_logs
+        Path              /var/log/app/*.log
+        read_from_head    true
+        multiline.parser  multiline-dotnet-logs
+
+    [FILTER]
+        Name             lua
+        Match            custom_logs
+        script           enrich_metadata.lua
+        call             enrich_log
+
+    # [FILTER]
+    #     Name             kubernetes
+    #     Match            *
+    #     Kube_URL         https://kubernetes.default.svc:443
+    #     Kube_CA_File     /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    #     Kube_Token_File  /var/run/secrets/kubernetes.io/serviceaccount/token
+
+    # Used for debugging Fluent-bit itself
+    # This will echo the record to stdout so you can see it
+    [OUTPUT]
+        name             stdout
+        match            *
+
+    # [OUTPUT]
+    #     Name         es
+    #     Match        *
+    #     Host         ${ES_HOSTNAME}
+    #     Port         443
+    #     HTTP_User    ${ES_USERNAME}
+    #     HTTP_Passwd  ${ES_PASSWORD}
+    #     tls          On
+    #     tls.verify   Off
+    #     Replace_Dots        On
+    #     Suppress_Type_Name On
+
+    #     # Optional: Customize index format to match Serilog
+    #     Index            appslogdev-%Y.%m
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fluent-bit
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: fluent-bit-read
+  namespace: default
+rules:
+  - apiGroups: [""]
+    resources:
+      - namespaces
+      - pods
+      - nodes
+      - nodes/proxy
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: fluent-bit-read
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: fluent-bit
+roleRef:
+  kind: Role
+  name: fluent-bit-read
+  apiGroup: rbac.authorization.k8s.io

@@ -43,3 +43,8 @@ content-type: application/json
 @orderId = f0c60000-8d12-00ff-509a-08dc78db471b
 GET {{order_host}}/summary?orderId={{orderId}}
 content-type: application/json
+
+
+###
+
+GET http://localhost:5001/bob

@@ -132,11 +132,28 @@ tasks:
       - linkerd viz install | kubectl apply -f -
       - linkerd check
 
+  knative-install:
+    desc: Install Knative
+    cmds:
+      # Reference: https://knative.dev/docs/install/yaml-install/serving/install-serving-with-yaml/#install-the-knative-serving-component
+      - kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.0/serving-crds.yaml
+      - kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.0/serving-core.yaml
+
+      # Reference: https://knative.dev/docs/install/yaml-install/serving/install-serving-with-yaml/#install-a-networking-layer
+      # - kubectl delete -f https://github.com/knative/net-kourier/releases/download/knative-v1.15.1/kourier.yaml
+      - >
+        kubectl patch configmap/config-network
+        --namespace knative-serving
+        --type merge
+        --patch '{"data":{"ingress-class":"traefik"}}'
+      # - kubectl --namespace kourier-system get service kourier
+      - kubectl --namespace kube-system get service traefik
+
   # ---------------------------------------------------------------------------
   # region: Tilt
 
   tilt-*:
-    desc: Start Tilt in 'up' mode or 'ci' mode
+    desc: Start Tilt in 'up' mode or 'ci' mode. E.g. `task tilt-up` or `task tilt-ci`
     prefix: tilt-{{index .MATCH 0}}
     cmds:
       - tilt {{index .MATCH 0}} --file ./Tiltfile --verbose {{if eq (index .MATCH 0) "up"}} --stream {{end}} {{.CLI_ARGS}}

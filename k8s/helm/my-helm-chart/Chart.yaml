@@ -1,0 +1,16 @@
+
+name: my-helm-chart
+description: My Helm Chart
+version: 0.1.0
+keywords:
+  - helm
+  - kubernetes
+  - chart
+sources:
+  - https://github.com/my-company/my-helm-chart
+dependencies: []
+deprecated: false
+apiVersion: v2
+annotations:
+  description: My Helm Chart
+appVersion: 0.1.0

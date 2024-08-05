@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: baget
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: baget
+  template:
+    metadata:
+      labels:
+        app: baget
+    spec:
+      containers:
+      - name: baget
+        image: loicsharma/baget:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: Baget__Database__Type
+          value: "Sqlite"
+        - name: Baget__Database__ConnectionString
+          value: "Data Source=baget.db"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: baget
+spec:
+  selector:
+    app: baget
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
